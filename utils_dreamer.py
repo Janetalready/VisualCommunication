@@ -28,9 +28,11 @@ def parse_arguments():
     parser.add_argument(
         '--data_root', default='./data/output/', help='data root folder')
     parser.add_argument(
-        '--sender_path', default='../ddpg_comm/pretrained/actor_one_stroke.pkl', help='pretrained folder')
+        '--sender_path', default='./pretrained/actor_one_stroke.pkl', help='pretrained folder')
     parser.add_argument(
         '--resume_path', default=None, help='pretrained folder')
+    parser.add_argument(
+        '--setting', default='complete', help='game settings')
     parser.add_argument('--max_step', type=int,
                         help='number of drawing steps', default=10)
     parser.add_argument('--num_stroke', type=int,

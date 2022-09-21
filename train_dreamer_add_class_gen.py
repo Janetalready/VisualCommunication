@@ -6,15 +6,16 @@ print(torch.__version__)
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
+from utils_dreamer import parse_arguments
 opt = parse_arguments()
-if opt.task == 'max':
+if opt.setting == 'max':
     from architectures_dreamer_max import Sender, ReceiverOnestep, ValueModel, Players
+elif opt.setting == 'retrieve':
+    from architectures_retrieve_5stroke import Sender, ReceiverOnestep, ValueModel, Players
 else:
     from architectures_dreamer_v2 import Sender, ReceiverOnestep, ValueModel, Players
-from torch.autograd import Variable
 import pdb
 from reinforce_one_stroke import *
-from utils_dreamer import parse_arguments
 from utils_dreamer import get_batch_random as get_batch_train_func
 import numpy as np
 import pickle
