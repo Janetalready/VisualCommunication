@@ -25,7 +25,7 @@ from torch.distributions import Normal
 import wandb
 import classification.train as classification_train
 from tqdm import tqdm
-
+os.environ['WANDB_SILENT']="true"
 wandb.login()
 USE_CUDA = torch.cuda.is_available()
 def to_numpy(var):
@@ -264,7 +264,7 @@ def save_step_evolve(opt, players, steps, pair_list):
             sketches.append(canvas)
             cate_names.append(img_name)
 
-    save_path = f'./to_cluster_{steps}_' + opt.exp + '/'
+    save_path = './to_cluster/' + opt.exp + f'/{steps}/'
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     with open(save_path + 'sketch.p', 'wb') as f:

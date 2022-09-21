@@ -79,7 +79,7 @@ def generate_data(opt, cate_list, dreamer_step):
     sketches = {}
     save_path = './classification_data/' + opt.exp + f'/{dreamer_step}/'
 
-    data_path = './to_cluster' + opt.exp + f'/{dreamer_step}'
+    data_path = './to_cluster/' + opt.exp + f'/{dreamer_step}'
     with open('{}/img_name.p'.format(data_path), 'rb') as f:
         img_names = pickle.load(f)
     with open('{}/sketch.p'.format(data_path), 'rb') as f:
