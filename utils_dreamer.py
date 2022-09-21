@@ -33,6 +33,7 @@ def parse_arguments():
         '--resume_path', default=None, help='pretrained folder')
     parser.add_argument(
         '--setting', default='complete', help='game settings')
+    parser.add_argument('--cuda', type=int, default=1, help='enables cuda')
     parser.add_argument('--max_step', type=int,
                         help='number of drawing steps', default=10)
     parser.add_argument('--num_stroke', type=int,
