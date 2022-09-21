@@ -1,0 +1,7 @@
+numpy
+torch==1.11.0
+opencv-python
+argparse
+torchvision
+wandb
+tqdm
