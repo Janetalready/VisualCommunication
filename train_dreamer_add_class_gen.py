@@ -330,7 +330,7 @@ def train(opt):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     sender = Sender(device, opt.max_step, opt, width = 128)
-    receiver = ReceiverOnestep(device, opt.game_size, 128, opt, eps=opt.eps)
+    receiver = ReceiverOnestep(device, opt.game_size, 128, opt)
     value_model = ValueModel(128, opt.game_size)
 
     sender.to(device)
