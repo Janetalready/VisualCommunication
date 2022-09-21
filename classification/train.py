@@ -77,9 +77,9 @@ def generate_data(opt, cate_list, dreamer_step):
     class2ID = {x: i for i, x in enumerate(cate_list)}
     cates = {}
     sketches = {}
-    save_path = f'./classification_data_{dreamer_step}/' + opt.exp + '/'
+    save_path = './classification_data/' + opt.exp + f'/{dreamer_step}/'
 
-    data_path = f'./to_cluster_{dreamer_step}_' + opt.exp
+    data_path = './to_cluster' + opt.exp + f'/{dreamer_step}'
     with open('{}/img_name.p'.format(data_path), 'rb') as f:
         img_names = pickle.load(f)
     with open('{}/sketch.p'.format(data_path), 'rb') as f:
@@ -135,16 +135,16 @@ def generate_data(opt, cate_list, dreamer_step):
 
 def train(opt, cate_list, dreamer_step):
     generate_data(opt, cate_list, dreamer_step)
-    train_dataset = Dataset(opt.split_root, './classification_data/' + opt.exp + '/')
+    train_dataset = Dataset(opt.split_root, './classification_data/' + opt.exp + f'/{dreamer_step}/')
 
     loader = torch.utils.data.DataLoader(train_dataset,
         batch_size=opt.batch_size, shuffle=True)
-    test_dataset = Dataset(opt.split_root, './classification_data/' + opt.exp + '/', train=False)
+    test_dataset = Dataset(opt.split_root, './classification_data/' + opt.exp + f'/{dreamer_step}/', train=False)
 
     test_loader = torch.utils.data.DataLoader(test_dataset,
                                          batch_size=opt.batch_size, shuffle=False)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    receiver = ReceiverOnestep(device, opt.game_size, 128, opt, eps=opt.eps)
+    receiver = ReceiverOnestep(device, opt.game_size, 128, opt)
 
     receiver.to(device)
 
