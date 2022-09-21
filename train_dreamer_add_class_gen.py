@@ -356,9 +356,9 @@ def train(opt):
                                  betas=(opt.beta1, opt.beta2))
 
 
-    suffix = 'd_seed%d_clip%d_lr%.4f_tau_s%d_same%d_noise%d' \
+    suffix = 'd_seed%d_clip%d_lr%.4f' \
     %(opt.manualSeed, opt.grad_clip,
-        opt.lr, opt.tau_s, opt.same, opt.noise)
+        opt.lr)
 
     if not os.path.exists(opt.outf):
         os.makedirs(opt.outf)
