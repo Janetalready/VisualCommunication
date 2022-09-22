@@ -257,7 +257,7 @@ def save_step_evolve(opt, players, steps, pair_list):
             sketches.append(canvas)
             cate_names.append(img_name)
 
-    save_path = './to_cluster_' + opt.exp + '/'
+    save_path = './to_cluster/' + opt.exp + f'/{steps}/'
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     with open(save_path + 'sketch.p', 'wb') as f:
