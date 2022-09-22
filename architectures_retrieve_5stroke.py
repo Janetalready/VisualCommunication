@@ -45,12 +45,12 @@ class Players(nn.Module):
 
         for i in range(opt.max_step):
             canvas0 = canvas.detach()
-            if not opt.sender_fix:
+            if not opt.sender_fixed:
                 canvas = sender_action_grad(self.sender,
-                                    images_vectors, i, canvas0, opt.num_stroke)
+                                    images_vectors, i, canvas0, num_stroke=opt.num_stroke)
             else:
                 canvas = sender_action(self.sender,
-                                   images_vectors, i, canvas0, opt.num_stroke)
+                                   images_vectors, i, canvas0, num_stroke=opt.num_stroke)
             cnt = cnt + 1 * mask
             step_num += 1
 

@@ -45,7 +45,7 @@ class Players(nn.Module):
         for i in range(opt.max_step):
             canvas0 = canvas.detach()
             canvas = sender_action_grad(self.sender,
-                                   images_vectors, i, canvas0, opt.num_stroke)
+                                   images_vectors, i, canvas0, num_stroke=opt.num_stroke)
 
             one_hot_output, receiver_probs = receiver_action_two_step(self.receiver,
                                                                       images_vectors_receiver, canvas0, canvas, opt,

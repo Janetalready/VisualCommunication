@@ -94,7 +94,7 @@ def eval(opt, players, steps, cate_list, save_img=True):
     max_precision = max(max_precision, total_acc.numpy().mean())
     print('validate:{} total_loss:{} acc:{} best_acc:{}'.format(steps, total_loss.numpy().mean(), total_acc.numpy().mean(), max_precision))
     # exit(0)
-    if not opt.sender_fix:
+    if not opt.sender_fixed:
         players.sender.train()
     players.receiver.train()
     players.sender.apply(set_bn_eval)
@@ -122,7 +122,7 @@ def eval_by_step(opt, players, steps, cate_list, max_step):
         for i in range(max_step):
             canvas0 = canvas.detach()
             canvas = sender_action(players.sender,
-                                   images_vectors_sender, i, canvas0, opt.num_stroke)
+                                   images_vectors_sender, i, canvas0, num_stroke=opt.num_stroke)
             step_num += 1
 
         one_hot_output, receiver_probs = receiver_action_retrieve(players.receiver,
@@ -144,7 +144,7 @@ def eval_by_step(opt, players, steps, cate_list, max_step):
                }, step=steps)
 
     # exit(0)
-    if not opt.sender_fix:
+    if not opt.sender_fixed:
         players.sender.train()
     players.receiver.train()
     players.sender.apply(set_bn_eval)
@@ -170,7 +170,7 @@ def save_step(opt, players, steps, cate_list):
 
     save_image_step(images_vectors_sender, images_vectors_receiver, y, choice, (res*255).astype(np.uint8), step, steps, save_path)
 
-    if not opt.sender_fix:
+    if not opt.sender_fixed:
         players.sender.train()
     players.receiver.train()
     players.sender.apply(set_bn_eval)
@@ -265,7 +265,7 @@ def save_step_evolve(opt, players, steps, pair_list):
     with open(save_path + 'img_name.p', 'wb') as f:
         pickle.dump(cate_names, f)
 
-    if not opt.sender_fix:
+    if not opt.sender_fixed:
         players.sender.train()
     players.receiver.train()
     players.sender.apply(set_bn_eval)
@@ -299,7 +299,7 @@ def test_generalization(opt, players, steps, pair_list, set_name):
                f'generalization/avg_step_{set_name}': sum(game_steps) / float(len(pair_list)),
                }, step=steps)
 
-    if not opt.sender_fix:
+    if not opt.sender_fixed:
         players.sender.train()
     players.receiver.train()
     players.sender.apply(set_bn_eval)
@@ -321,13 +321,13 @@ def train(opt):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     sender = Sender(device, opt.max_step, opt, width = 128)
-    receiver = ReceiverOnestep(device, opt.game_size, 128, opt, eps=opt.eps)
+    receiver = ReceiverOnestep(device, opt.game_size, 128, opt)
 
     sender.to(device)
     receiver.to(device)
     players = Players(sender, receiver)
     players.sender.apply(set_bn_eval)
-    if opt.sender_fix:
+    if opt.sender_fixed:
         players.sender.eval()
 
     if opt.cuda:
@@ -343,9 +343,9 @@ def train(opt):
             lr=opt.lr, momentum=0.0, dampening=0, weight_decay=0,
             nesterov=False)
 
-    suffix = 'd_seed%d_clip%d_lr%.4f_tau_s%d_same%d_noise%d' \
+    suffix = 'd_seed%d_clip%d_lr%.4f' \
     %(opt.manualSeed, opt.grad_clip,
-        opt.lr, opt.tau_s, opt.same, opt.noise)
+        opt.lr)
     # added after
     if not os.path.exists(opt.outf):
         os.makedirs(opt.outf)
