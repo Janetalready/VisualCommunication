@@ -22,22 +22,23 @@ def compute_similarity_images(space):
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--split_root', default='./data/same_cate_mul_image300', help='split root folder')
+        '--split_root', default='../visual_communication_II/data/same_cate_mul_image300', help='split root folder')
     parser.add_argument(
-        '--category_list', default='./data/category.txt', help='split root folder')
+        '--category_list', default='../visual_communication_II/data/category.txt', help='split root folder')
     parser.add_argument(
-        '--data_root', default='./data/output/', help='data root folder')
+        '--data_root', default='../synthesizing_human_like_sketches/output/', help='data root folder')
     parser.add_argument(
-        '--sender_path', default='./pretrained/actor_one_stroke.pkl', help='pretrained folder')
+        '--sender_path', default='../visual_communication_II/signal_game/pretrained/actor.pkl', help='pretrained folder')
     parser.add_argument(
         '--resume_path', default=None, help='pretrained folder')
     parser.add_argument(
         '--setting', default='complete', help='game settings')
+    parser.add_argument('--offline_test', type=int, default=0, help='offline test')
     parser.add_argument('--cuda', type=int, default=1, help='enables cuda')
     parser.add_argument('--max_step', type=int,
-                        help='number of drawing steps', default=10)
+                        help='number of drawing steps', default=7)
     parser.add_argument('--num_stroke', type=int,
-                        help='number of strokes', default=3)
+                        help='number of strokes', default=5)
     parser.add_argument('--sender_decay', type=float,
                         help='sender_decay_rate', default=0.95)
     parser.add_argument('--receiver_decay', type=float,
@@ -84,7 +85,7 @@ def parse_arguments():
                         help='folder to experiment')
     parser.add_argument('--log_outf', default='train_log_dreamer',
                                     help='folder to training log')
-    parser.add_argument('--manualSeed', type=int,default=0,
+    parser.add_argument('--manualSeed', type=int,default=10,
                         help='manual seed')
     parser.add_argument('--game_size', type=int, default=4,
                         help='game size')

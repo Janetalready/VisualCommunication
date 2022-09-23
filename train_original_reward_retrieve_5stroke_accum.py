@@ -23,7 +23,7 @@ import cv2
 import classification.train as classification_train
 from tqdm import tqdm
 import wandb
-
+os.environ['WANDB_SILENT']="true"
 wandb.login()
 USE_CUDA = torch.cuda.is_available()
 
@@ -327,11 +327,24 @@ def train(opt):
     receiver.to(device)
     players = Players(sender, receiver)
     players.sender.apply(set_bn_eval)
+
     if opt.sender_fixed:
         players.sender.eval()
 
     if opt.cuda:
         players.cuda()
+
+    if opt.resume_path is not None:
+        print('loaded:{}'.format(opt.resume_path))
+        players.load_state_dict(torch.load(opt.resume_path))
+
+    if opt.offline_test:
+        save_step_evolve(opt, players, 0, pair_list)
+        test_generalization(opt, players, 0, pair_list, 'train')
+        test_generalization(opt, players, 0, pair_list_test, 'test')
+        test_generalization(opt, players, 0, pair_list_unseen_cate, 'unseen_cate')
+        classification_train.train(opt, cate_list, 0)
+        exit(0)
 
     if opt.opti == 'adam':
         optimizer_r = optim.Adam(filter(lambda p: p.requires_grad, players.receiver.parameters()),

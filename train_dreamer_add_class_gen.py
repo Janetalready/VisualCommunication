@@ -10,8 +10,6 @@ from utils_dreamer import parse_arguments
 opt = parse_arguments()
 if opt.setting == 'max':
     from architectures_dreamer_max import Sender, ReceiverOnestep, ValueModel, Players
-elif opt.setting == 'retrieve':
-    from architectures_retrieve_5stroke import Sender, ReceiverOnestep, ValueModel, Players
 else:
     from architectures_dreamer_v2 import Sender, ReceiverOnestep, ValueModel, Players
 import pdb
@@ -301,8 +299,8 @@ def test_generalization(opt, players, steps, pair_list, set_name):
 
     assert len(game_steps) == len(pair_list)
     assert len(gt_test) == len(pair_list)
-    # print(sum(game_steps) / float(len(pair_list)))
-    # print(sum(gt_test) / float(len(pair_list)))
+    print('avg_step', sum(game_steps) / float(len(pair_list)))
+    print('test_acc', sum(gt_test) / float(len(pair_list)))
     wandb.log({f'generalization/test_{set_name}': sum(gt_test) / float(len(pair_list)),
                f'generalization/avg_step_{set_name}': sum(game_steps) / float(len(pair_list)),
                }, step=steps)
@@ -346,6 +344,14 @@ def train(opt):
 
     if opt.cuda:
         players.cuda()
+
+    if opt.offline_test:
+        save_step_evolve(opt, players, 0, pair_list)
+        test_generalization(opt, players, 0, pair_list, 'train')
+        test_generalization(opt, players, 0, pair_list_test, 'test')
+        test_generalization(opt, players, 0, pair_list_unseen_cate, 'unseen_cate')
+        classification_train.train(opt, cate_list, 0)
+        exit(0)
 
     optimizer_r = optim.Adam(filter(lambda p: p.requires_grad, players.receiver.parameters()),
         lr=opt.receiver_lr, betas=(opt.beta1, opt.beta2))
