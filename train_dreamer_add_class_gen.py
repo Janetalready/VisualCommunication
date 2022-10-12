@@ -22,8 +22,11 @@ import cv2
 from torch.distributions import Normal
 import wandb
 import classification.train as classification_train
+from collections import defaultdict
 from tqdm import tqdm
-os.environ['WANDB_SILENT']="true"
+from numpy.linalg import norm
+from scipy import stats
+# os.environ['WANDB_SILENT']="true"
 wandb.login()
 USE_CUDA = torch.cuda.is_available()
 def to_numpy(var):
@@ -311,6 +314,44 @@ def test_generalization(opt, players, steps, pair_list, set_name):
     if opt.sender_fix_norm:
         players.sender.apply(set_bn_eval)
 
+def semantic_correlation(opt, cate_list, step):
+    cate_features = defaultdict(list)
+    data_path = './classification_data/' + opt.exp + f'/{step}/to_embed'
+    with open('{}/img_names.p'.format(data_path), 'rb') as f:
+        img_names = pickle.load(f)
+    with open('{}/sketch_features.p'.format(data_path), 'rb') as f:
+        imgs = pickle.load(f)
+    with open('./data/cate2vec.p', 'rb') as f:
+        cate2vec = pickle.load(f)
+    for pid in range(len(img_names)):
+        target_name = img_names[pid]
+        target_cate = target_name.split('/')[0]
+        cate_features[target_cate].append(imgs[pid].cpu().numpy())
+
+    cate2feature = {}
+    for cate in cate_list:
+        cate_feature = cate_features[cate]
+        cate_feature = np.array(cate_feature).mean(axis=0)
+        cate2feature[cate] = cate_feature
+
+    x = []
+    y = []
+    for cate_i in cate_list:
+        for cate_j in cate_list:
+            vec1 = cate2vec[cate_i]
+            vec2 = cate2vec[cate_j]
+            sim = vec1.dot(vec2) / (norm(vec1) * norm(vec2))
+            x.append(sim)
+
+            vec1 = cate2feature[cate_i]
+            vec2 = cate2feature[cate_j]
+            sim = vec1.dot(vec2) / (norm(vec1) * norm(vec2))
+            y.append(sim)
+
+    a = stats.pearsonr(np.array(x), np.array(y))
+    print(a)
+    wandb.log({f'semantic/correlation': a[0], }, step=step)
+
 def train(opt):
 
     with open(opt.category_list, 'r') as f:
@@ -347,10 +388,14 @@ def train(opt):
 
     if opt.offline_test:
         save_step_evolve(opt, players, 0, pair_list)
+        print('****generalization****')
         test_generalization(opt, players, 0, pair_list, 'train')
         test_generalization(opt, players, 0, pair_list_test, 'test')
         test_generalization(opt, players, 0, pair_list_unseen_cate, 'unseen_cate')
+        print('****classification****')
         classification_train.train(opt, cate_list, 0)
+        print('****semantic correlation****')
+        semantic_correlation(opt, cate_list, 0)
         exit(0)
 
     optimizer_r = optim.Adam(filter(lambda p: p.requires_grad, players.receiver.parameters()),
@@ -461,6 +506,7 @@ def train(opt):
             test_generalization(opt, players, i_games, pair_list_test, 'test')
             test_generalization(opt, players, i_games, pair_list_unseen_cate, 'unseen_cate')
             classification_train.train(opt, cate_list, i_games)
+            semantic_correlation(opt, cate_list, i_games)
 
         if i_games % 1000 == 0:
             # save current model

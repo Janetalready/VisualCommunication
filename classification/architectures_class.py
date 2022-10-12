@@ -26,5 +26,5 @@ class ReceiverOnestep(nn.Module):
         features = self.feature.avgpool(features)
         features = features.view(-1, 512*7*7)
         features = self.feature.classifier[:-1](features)
-        return probs#, features
+        return probs, features
 

@@ -50,7 +50,7 @@ def eval(opt, loader, receiver, steps, dreamer_step, save_img=True):
         y = y.cuda()
 
         with torch.no_grad():
-            probs = receiver(images)
+            probs, _ = receiver(images)
 
         _, amax = probs.max(dim=1)
         acc_cnt += (amax == y).sum()
@@ -66,7 +66,7 @@ def eval(opt, loader, receiver, steps, dreamer_step, save_img=True):
         model_save_name = os.path.join(opt.outf, f'classification_{dreamer_step}.pt')
         torch.save(receiver.state_dict(), model_save_name)
     max_precision = max(max_precision, acc_cnt/total_cnt)
-    print('validate:{} acc:{} best_acc:{}'.format(steps, acc_cnt/total_cnt, max_precision))
+    # print('validate:{} acc:{} best_acc:{}'.format(steps, acc_cnt/total_cnt, max_precision))
 
     receiver.train()
 
@@ -133,8 +133,63 @@ def generate_data(opt, cate_list, dreamer_step):
     with open('{}/test_imgs.p'.format(save_path), 'wb') as f:
         pickle.dump(test_imgs, f)
 
+def get_embedding(loader, test_loader, receiver, opt, train_img_names, test_img_names, dreamer_step, ID2class):
+    sketch_features = []
+    cate_names = []
+    img_names = []
+    save_path = './classification_data/' + opt.exp + f'/{dreamer_step}/to_embed/'
+    gt = []
+    for i in range(len(loader.dataset)):
+        img_s, y = loader.dataset[i]
+        if opt.cuda:
+            img_s = torch.tensor(img_s).cuda()
+        else:
+            img_s = torch.tensor(img_s)
+
+        with torch.no_grad():
+            probs, features = receiver(img_s)
+            _, amax = probs.max(dim=1)
+            sketch_features.append(features[0])
+            cate_names.append(ID2class[y])
+            img_names.append(train_img_names[i])
+
+    for i in range(len(test_loader.dataset)):
+        img_s, y = test_loader.dataset[i]
+        if opt.cuda:
+            img_s = torch.tensor(img_s.cuda())
+        else:
+            img_s = torch.tensor(img_s)
+
+        with torch.no_grad():
+            probs, features = receiver(img_s)
+            _, amax = probs.max(dim=1)
+            sketch_features.append(features[0])
+            cate_names.append(ID2class[y])
+            img_names.append(test_img_names[i])
+            if amax[0] == y:
+                gt.append(1.)
+            else:
+                gt.append(0.)
+
+    print(sum(gt) / len(gt))
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
+    with open(save_path + 'sketch_features.p', 'wb') as f:
+        pickle.dump(sketch_features, f)
+    with open(save_path + 'cate_names.p', 'wb') as f:
+        pickle.dump(cate_names, f)
+    with open(save_path + 'img_names.p', 'wb') as f:
+        pickle.dump(img_names, f)
+
 def train(opt, cate_list, dreamer_step):
     generate_data(opt, cate_list, dreamer_step)
+    ID2class = {i: x for i, x in enumerate(cate_list)}
+    save_path = './classification_data/' + opt.exp + f'/{dreamer_step}/'
+    with open('{}/train_img_names.p'.format(save_path), 'rb') as f:
+        train_img_names = pickle.load(f)
+    with open('{}/test_img_names.p'.format(save_path), 'rb') as f:
+        test_img_names = pickle.load(f)
     train_dataset = Dataset(opt.split_root, './classification_data/' + opt.exp + f'/{dreamer_step}/')
 
     loader = torch.utils.data.DataLoader(train_dataset,
@@ -177,7 +232,7 @@ def train(opt, cate_list, dreamer_step):
             y = y.to(device)
 
             optimizer.zero_grad()
-            probs = receiver(images)
+            probs, _ = receiver(images)
             output = loss(probs, y)
 
             output.backward()
@@ -185,7 +240,7 @@ def train(opt, cate_list, dreamer_step):
             total_loss += output.detach().cpu().numpy()
             cnt += 1
 
-        print('step:{} total_loss:{}'.format(i_games, (total_loss/cnt).mean()))
+        # print('step:{} total_loss:{}'.format(i_games, (total_loss/cnt).mean()))
         # LR is decayed before the parameter update
         if i_games > opt.lr_decay_start and opt.lr_decay_start >= 0 and optimizer.param_groups[-1]['lr'] > 1e-4:
             frac = (i_games  - opt.lr_decay_start) / np.float32(opt.lr_decay_every)
@@ -196,6 +251,9 @@ def train(opt, cate_list, dreamer_step):
         if i_games % 10 == 0:
             eval(opt,
                  test_loader, receiver, i_games, dreamer_step, save_img=False)
+
+    get_embedding(loader, test_loader, receiver, opt, train_img_names, test_img_names, dreamer_step, ID2class)
+    print('max classfication acc', max_precision)
     wandb.log({f'train_classification/acc': max_precision, }, step=dreamer_step)
 
 
